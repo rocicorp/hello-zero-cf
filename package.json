@@ -13,13 +13,17 @@
 		"publish": true
 	},
 	"dependencies": {
+		"@rocicorp/zero": "0.24.2025101200",
 		"hono": "4.8.2",
+		"js-cookie": "^3.0.5",
 		"react": "19.0.0",
-		"react-dom": "19.0.0"
+		"react-dom": "19.0.0",
+		"zod": "^3.23.8"
 	},
 	"devDependencies": {
 		"@cloudflare/vite-plugin": "1.13.13",
 		"@eslint/js": "9.29.0",
+		"@types/js-cookie": "^3.0.6",
 		"@types/node": "24.0.4",
 		"@types/react": "19.0.10",
 		"@types/react-dom": "19.0.4",
