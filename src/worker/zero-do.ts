@@ -1,22 +1,58 @@
 import { DurableObject } from "cloudflare:workers";
+import { Zero } from "@rocicorp/zero";
+import {
+  schema,
+  type Schema,
+  type Message,
+  type User,
+} from "../shared/schema.js";
+import { queries } from "../shared/queries.js";
+import { formatDate } from "../react-app/date.js";
 
 export class ZeroDO extends DurableObject {
-  private count: number = 0;
+  #z: Zero<Schema> = new Zero({
+    server: "http://localhost:4848",
+    userID: "anon",
+    schema,
+    kvStore: "mem",
+  });
 
   constructor(state: DurableObjectState, env: Env) {
     super(state, env);
+    addEventListener("unhandledrejection", (e) => {
+      console.log("unhandledrejection", e);
+    });
+    const view = this.#z.materialize(queries.messages());
+    view.addListener(this.#render);
+  }
+
+  #render = (
+    messages: readonly (Message & { readonly sender: User | undefined })[]
+  ) => {
+    console.log("\n=== Messages from Zero in DO ===");
+    console.log("Sender".padEnd(12) + "Message".padEnd(72) + "Sent");
+    for (const message of messages) {
+      console.log(
+        (message.sender?.name ?? "Unknown").padEnd(12) +
+          message.body.padEnd(72) +
+          formatDate(message.timestamp)
+      );
+    }
+    console.log(`Total: ${messages.length} messages\n`);
+  };
+
+  init() {
+    const url = "http://localhost:5173/";
+    return `Watching messages from <a href="${url}" target="_blank">${url}</a>`;
   }
 
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
-    if (url.pathname === "/increment") {
-      this.count++;
-      return Response.json({ count: this.count });
-    }
-
-    if (url.pathname === "/get") {
-      return Response.json({ count: this.count });
+    if (url.pathname === "/init") {
+      return new Response(this.init(), {
+        headers: { "Content-Type": "text/html" },
+      });
     }
 
     return Response.json({ error: "Not found" }, { status: 404 });
