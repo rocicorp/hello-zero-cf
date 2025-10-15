@@ -1,41 +1,24 @@
 import { type MouseEvent, useState } from "react";
+import { useQuery } from "@rocicorp/zero/react";
 import { formatDate } from "./date";
 import { useInterval } from "./use-interval";
-
-// Mock data for UI shell - will be replaced with real Zero queries later
-const mockUsers = [
-  { id: "ycD76wW4R2", name: "Aaron", partner: true },
-  { id: "IoQSaxeVO5", name: "Matt", partner: true },
-  { id: "WndZWmGkO4", name: "Cesar", partner: true },
-];
-
-const mockMessages = [
-  {
-    id: "1",
-    senderID: "ycD76wW4R2",
-    body: "Hey guys, is the zero package ready yet?",
-    timestamp: Date.now() - 3600000,
-    sender: { id: "ycD76wW4R2", name: "Aaron", partner: true },
-  },
-  {
-    id: "2",
-    senderID: "IoQSaxeVO5",
-    body: "It will be ready next week",
-    timestamp: Date.now() - 1800000,
-    sender: { id: "IoQSaxeVO5", name: "Matt", partner: true },
-  },
-];
+import { queries } from "../shared/queries";
 
 function App() {
   const [filterUser, setFilterUser] = useState<string>("");
   const [filterText, setFilterText] = useState<string>("");
   const [action, setAction] = useState<"add" | "remove" | undefined>(undefined);
 
-  // Mock user - will be replaced with real auth later
+  // Use Zero queries
+  const [users] = useQuery(queries.users());
+  const [allMessages] = useQuery(queries.messages());
+
+  // Log messages to console to verify
+  console.log("Messages from Zero:", allMessages);
+
+  // For now, just use all messages as filtered
   const currentUser = "anon";
-  const users = mockUsers;
-  const allMessages = mockMessages;
-  const filteredMessages = mockMessages;
+  const filteredMessages = allMessages;
 
   const hasFilters = filterUser || filterText;
 
@@ -45,7 +28,7 @@ function App() {
         setAction(undefined);
       }
     },
-    action !== undefined ? 1000 / 60 : null,
+    action !== undefined ? 1000 / 60 : null
   );
 
   const handleAction = () => {
@@ -66,7 +49,7 @@ function App() {
   const removeMessages = (e: MouseEvent) => {
     if (currentUser === "anon" && !e.shiftKey) {
       alert(
-        "You must be logged in to delete. Hold the shift key to try anyway.",
+        "You must be logged in to delete. Hold the shift key to try anyway."
       );
       return;
     }
@@ -79,11 +62,11 @@ function App() {
     e: MouseEvent,
     id: string,
     senderID: string,
-    prev: string,
+    prev: string
   ) => {
     if (senderID !== currentUser && !e.shiftKey) {
       alert(
-        "You aren't logged in as the sender of this message. Editing won't be permitted. Hold the shift key to try anyway.",
+        "You aren't logged in as the sender of this message. Editing won't be permitted. Hold the shift key to try anyway."
       );
       return;
     }
