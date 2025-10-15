@@ -1,5 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { Zero } from "@rocicorp/zero";
+import { clearTerminal, cursorTo } from "ansi-escapes";
 import {
   schema,
   type Schema,
@@ -29,16 +30,19 @@ export class ZeroDO extends DurableObject {
   #render = (
     messages: readonly (Message & { readonly sender: User | undefined })[]
   ) => {
-    console.log("\n=== Messages from Zero in DO ===");
-    console.log("Sender".padEnd(12) + "Message".padEnd(72) + "Sent");
+    let s = clearTerminal;
+    s += cursorTo(0, 0);
+
+    s += "Sender".padEnd(12) + "Message".padEnd(72) + "Sent" + "\n";
     for (const message of messages) {
-      console.log(
+      s +=
         (message.sender?.name ?? "Unknown").padEnd(12) +
-          message.body.padEnd(72) +
-          formatDate(message.timestamp)
-      );
+        message.body.padEnd(72) +
+        formatDate(message.timestamp) +
+        "\n";
     }
-    console.log(`Total: ${messages.length} messages\n`);
+
+    console.log(s);
   };
 
   init() {
