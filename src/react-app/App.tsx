@@ -18,14 +18,14 @@ function App() {
   // Use Zero queries
   const [users] = useQuery(queries.users());
   const [allMessages] = useQuery(queries.messages());
+  const [filteredMessages] = useQuery(
+    queries.filteredMessages({
+      senderID: filterUser,
+      body: filterText,
+    })
+  );
 
-  // Log messages to console to verify
-  console.log("Messages from Zero:", allMessages);
-
-  // For now, just use all messages as filtered
-  const filteredMessages = allMessages;
-
-  const hasFilters = filterUser || filterText;
+  const hasFilters = filterUser ?? filterText;
 
   useInterval(
     () => {
