@@ -72,12 +72,16 @@ td:last-child {
 	display: flex;
 	gap: 1rem;
 	align-items: center;
-	justify-content: space-between;
-	margin: 1rem 0;
+	margin-bottom: 1rem;
+	white-space: nowrap;
 }
 
 .controls > div {
+	flex: 1;
 	display: flex;
-	gap: 0.5rem;
+	flex-direction: row;
+	justify-content: start;
+	gap: 1rem;
 	align-items: center;
+	margin-bottom: 1rem;
 }
