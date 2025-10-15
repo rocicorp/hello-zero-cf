@@ -5,6 +5,7 @@ import type { Context } from "hono";
 import { must } from "../shared/must.js";
 import { schema } from "../shared/schema.js";
 import { createMutators } from "../shared/mutators.js";
+import { getUserID } from "./login.js";
 
 export async function handleMutate(c: Context) {
   const processor = new PushProcessor(
@@ -15,5 +16,6 @@ export async function handleMutate(c: Context) {
       )
     )
   );
-  return await processor.process(createMutators(), c.req.raw);
+  const userID = await getUserID(c);
+  return await processor.process(createMutators(userID), c.req.raw);
 }

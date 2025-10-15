@@ -16,14 +16,14 @@ const server = must(
 );
 
 const signedCookie = Cookies.get(AUTH_COOKIE_NAME);
-const userID = signedCookie ? signedCookie.split(".")[0] : "anon";
+const userID = signedCookie && signedCookie.split(".")[0];
 
 const zeroOptions = {
-  userID,
+  userID: userID ?? "anon",
   server,
   schema,
   queries,
-  mutators: createMutators(),
+  mutators: createMutators(userID),
 };
 
 createRoot(document.getElementById("root")!).render(

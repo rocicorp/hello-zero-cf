@@ -44,7 +44,10 @@ function App() {
       z.mutate.message.create(randomMessage(users));
       return true;
     } else {
-      console.log("Remove message");
+      // Remove the most recent message
+      if (filteredMessages.length > 0) {
+        z.mutate.message.delete(filteredMessages[0].id);
+      }
       return true;
     }
   };
