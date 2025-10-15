@@ -7,6 +7,7 @@ declare namespace Cloudflare {
 	}
 	interface Env {
 		AUTH_SECRET: string;
+		ZERO_UPSTREAM_DB: string;
 	}
 }
 interface Env extends Cloudflare.Env {}

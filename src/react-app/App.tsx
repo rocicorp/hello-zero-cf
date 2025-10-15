@@ -6,9 +6,11 @@ import { useInterval } from "./use-interval";
 import { queries } from "../shared/queries";
 import type { Schema } from "../shared/schema";
 import { AUTH_COOKIE_NAME } from "../shared/auth";
+import { randomMessage } from "./test-data";
+import { Mutators } from "../shared/mutators";
 
 function App() {
-  const z = useZero<Schema>();
+  const z = useZero<Schema, Mutators>();
   const [filterUser, setFilterUser] = useState<string>("");
   const [filterText, setFilterText] = useState<string>("");
   const [action, setAction] = useState<"add" | "remove" | undefined>(undefined);
@@ -39,7 +41,7 @@ function App() {
       return false;
     }
     if (action === "add") {
-      console.log("Add message");
+      z.mutate.message.create(randomMessage(users));
       return true;
     } else {
       console.log("Remove message");
