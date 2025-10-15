@@ -79,7 +79,9 @@ function App() {
       return;
     }
     const body = prompt("Edit message", prev);
-    console.log("Edit message", id, body);
+    if (body !== null && body !== prev) {
+      z.mutate.message.update({ id, body });
+    }
   };
 
   const toggleLogin = async () => {
