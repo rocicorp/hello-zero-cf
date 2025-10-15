@@ -1,90 +1,258 @@
-# React + Vite + Hono + Cloudflare Workers
+# Hello Zero Cloudflare
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/vite-react-template)
+This demo shows how to run [Zero](https://github.com/rocicorp/zero) in a Cloudflare Workers + Durable Objects environment. It demonstrates:
 
-This template provides a minimal setup for building a React application with TypeScript and Vite, designed to run on Cloudflare Workers. It features hot module replacement, ESLint integration, and the flexibility of Workers deployments.
+- A React web UI using Zero
+- Using Hono to implement Zero's API requirements and auth
+- A Durable Object running Zero as another client for live monitoring
 
-![React + TypeScript + Vite + Cloudflare Workers](https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/fc7b4b62-442b-4769-641b-ad4422d74300/public)
+## Why run Zero **Client** in a Durable Object!?
 
-<!-- dash-content-start -->
+Imagine you're running collaboration sessions in DOs and need to reliably control their lifecycle. Instead of unreliably sending shutdown messages to every DO, you can write state to Postgres and have the DOs sync that state. The DO monitors what state it should be in and acts accordingly.
 
-🚀 Supercharge your web development with this powerful stack:
+More generally, any time a DO needs some subset of Postgres data, it's useful to have a live-updated, consistent view rather than repeatedly querying.
 
-- [**React**](https://react.dev/) - A modern UI library for building interactive interfaces
-- [**Vite**](https://vite.dev/) - Lightning-fast build tooling and development server
-- [**Hono**](https://hono.dev/) - Ultralight, modern backend framework
-- [**Cloudflare Workers**](https://developers.cloudflare.com/workers/) - Edge computing platform for global deployment
+## Architecture
 
-### ✨ Key Features
-
-- 🔥 Hot Module Replacement (HMR) for rapid development
-- 📦 TypeScript support out of the box
-- 🛠️ ESLint configuration included
-- ⚡ Zero-config deployment to Cloudflare's global network
-- 🎯 API routes with Hono's elegant routing
-- 🔄 Full-stack development setup
-- 🔎 Built-in Observability to monitor your Worker
-
-Get started in minutes with local development or deploy directly via the Cloudflare dashboard. Perfect for building modern, performant web applications at the edge.
-
-<!-- dash-content-end -->
-
-## Getting Started
-
-To start a new project with this template, run:
-
-```bash
-npm create cloudflare@latest -- --template=cloudflare/templates/vite-react-template
+```
+┌─────────────────────────────────────────────────────────┐
+│  Browser (http://localhost:5173)                        │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │  React UI + Zero Client                         │    │
+│  └─────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────┘
+                         │
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│  Zero Cache (http://localhost:4848)                     │
+│  - Proxies queries to Worker endpoints                  │
+│  - Manages replica state                                │
+│  - Streams changes from Postgres                        │
+└─────────────────────────────────────────────────────────┘
+                         │
+        ┌────────────────┼────────────────┐
+        ↓                ↓                ↓
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│  /api/       │  │  /api/       │  │  /api/       │
+│  get-queries │  │  mutate      │  │  do/init     │
+└──────────────┘  └──────────────┘  └──────────────┘
+        │                │                │
+        └────────────────┼────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│  Cloudflare Worker (via Vite Plugin)                    │
+│  - Hono server handling API routes                      │
+│  - Durable Object (ZeroDO)                              │
+│    └─ Zero Client monitoring messages                   │
+│       └─ Prints live table to console                   │
+└─────────────────────────────────────────────────────────┘
+                         │
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│  Postgres (localhost:5432)                              │
+│  - Source of truth                                      │
+│  - Logical replication enabled                          │
+│  - User and Message tables                              │
+└─────────────────────────────────────────────────────────┘
 ```
 
-A live deployment of this template is available at:
-[https://react-vite-template.templates.workers.dev](https://react-vite-template.templates.workers.dev)
+## Running the Demo
 
-## Development
+You'll need **3 terminals** to run this example!
 
-Install dependencies:
-
-```bash
-npm install
-```
-
-Start the development server with:
+### 1. Start Postgres
 
 ```bash
-npm run dev
+# Terminal 1
+npm run dev:db-up
 ```
 
-Your application will be available at [http://localhost:5173](http://localhost:5173).
-
-## Production
-
-Build your project for production:
+### 2. Start Zero Cache
 
 ```bash
-npm run build
+# Terminal 2
+npm run dev:zero-cache
 ```
 
-Preview your build locally:
+### 3. Start UI
 
 ```bash
-npm run preview
+# Terminal 3
+npm run dev:ui
 ```
 
-Deploy your project to Cloudflare Workers:
+The Vite dev server (with Cloudflare plugin) runs your Worker code locally, handling both the React UI and API endpoints.
+
+Open a browser at **http://localhost:5173** to:
+
+- Add/edit/delete messages
+- Login/logout (randomly assigns you a user)
+- Filter messages by sender or text content
+
+### 3. Trigger the Durable Object
+
+Once the UI is running, trigger the DO to start monitoring messages:
 
 ```bash
-npm run build && npm run deploy
+curl http://localhost:5173/api/do/init
 ```
 
-Monitor your workers:
+Or open **http://localhost:5173/api/do/init** in your browser.
+
+The DO will start printing a live-updating table of messages to **Terminal 3** (where `dev:ui` is running). As you add, edit, or delete messages in the web UI, you'll see the DO's console output update in real-time!
+
+## Project Structure
+
+```
+hello-zero-cf/
+├── src/
+│   ├── shared/              # Code shared between client and server
+│   │   ├── schema.ts        # Zero schema (User, Message tables)
+│   │   ├── queries.ts       # Synced queries
+│   │   ├── mutators.ts      # Custom mutators (create, delete, update)
+│   │   ├── auth.ts          # Shared auth constants
+│   │   └── must.ts          # Utility for null checking
+│   ├── worker/              # Cloudflare Worker code
+│   │   ├── index.ts         # Hono app with routes
+│   │   ├── zero-do.ts       # Durable Object with Zero client
+│   │   ├── login.ts         # Authentication handlers
+│   │   ├── mutate.ts        # Mutation endpoint
+│   │   └── get-queries.ts   # Query endpoint
+│   └── react-app/           # React UI
+│       ├── App.tsx          # Main app component
+│       ├── main.tsx         # Entry point with ZeroProvider
+│       └── ...
+├── db/
+│   ├── docker-compose.yml   # Postgres with replication config
+│   └── seed.sql             # Database schema and seed data
+├── wrangler.json            # Cloudflare Workers config
+└── .env                     # Environment variables
+```
+
+## Key Features
+
+### Synced Queries
+
+The demo uses Zero's synced queries API (not legacy ad-hoc queries):
+
+```typescript
+// src/shared/queries.ts
+export const queries = {
+  users: syncedQuery("users", z.tuple([]), () => {
+    return builder.user;
+  }),
+  messages: syncedQuery("messages", z.tuple([]), () => {
+    return builder.message.related("sender").orderBy("timestamp", "desc");
+  }),
+  filteredMessages: syncedQuery(
+    "filteredMessages",
+    z.tuple([z.object({ senderID: z.string(), body: z.string() })]),
+    ({ senderID, body }) => {
+      let query = builder.message.related("sender");
+      if (senderID) query = query.where("senderID", senderID);
+      if (body) query = query.where("body", "LIKE", `%${escapeLike(body)}%`);
+      return query.orderBy("timestamp", "desc");
+    }
+  ),
+};
+```
+
+### Custom Mutators
+
+Server-side mutators with authentication checks:
+
+```typescript
+// src/shared/mutators.ts
+export function createMutators(userID?: string) {
+  return {
+    message: {
+      async create(tx: Transaction<Schema>, message: Message) {
+        await tx.mutate.message.insert(message);
+      },
+      async delete(tx: Transaction<Schema>, id: string) {
+        mustBeLoggedIn(userID);
+        await tx.mutate.message.delete({ id });
+      },
+      async update(tx: Transaction<Schema>, message: MessageUpdate) {
+        mustBeLoggedIn(userID);
+        const prev = await tx.query.message.where("id", message.id).one().run();
+        if (!prev) return;
+        if (prev.senderID !== userID) {
+          throw new Error("Must be sender of message to edit");
+        }
+        await tx.mutate.message.update(message);
+      },
+    },
+  };
+}
+```
+
+### Cookie-Based Auth
+
+Uses Hono's signed cookies (no JWT library needed):
+
+```typescript
+// Server: src/worker/login.ts
+await setSignedCookie(c, AUTH_COOKIE_NAME, userID, secretKey);
+
+// Client: src/react-app/main.tsx
+const signedCookie = Cookies.get(AUTH_COOKIE_NAME);
+const userID = signedCookie && signedCookie.split(".")[0];
+```
+
+### Durable Object with Zero
+
+The DO runs Zero's lower-level class API (not React hooks):
+
+```typescript
+// src/worker/zero-do.ts
+export class ZeroDO extends DurableObject {
+  #z: Zero<Schema> = new Zero({
+    server: "http://localhost:4848",
+    userID: "anon",
+    schema,
+    kvStore: "mem",
+  });
+
+  constructor(state: DurableObjectState, env: Env) {
+    super(state, env);
+    const view = this.#z.materialize(queries.messages());
+    view.addListener(this.#render);
+  }
+
+  #render = (messages) => {
+    // Print live-updating table to console
+  };
+}
+```
+
+## Cleaning Up
+
+To stop Postgres and remove volumes:
 
 ```bash
-npx wrangler tail
+npm run dev:db-down
 ```
 
-## Additional Resources
+To completely clean the database and Zero replica files:
 
-- [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
-- [Vite Documentation](https://vitejs.dev/guide/)
-- [React Documentation](https://reactjs.org/)
-- [Hono Documentation](https://hono.dev/)
+```bash
+npm run dev:clean
+```
+
+## Deployment
+
+This is a development demo. For production deployment to Cloudflare:
+
+1. Create a production Postgres database with logical replication enabled
+2. Set up environment variables in Cloudflare dashboard or via `wrangler secret`
+3. Deploy: `npm run deploy`
+
+Note: You'll need to host the Zero cache server somewhere accessible to your Worker (Cloudflare Workers can make outbound HTTP requests).
+
+## Learn More
+
+- [Zero Documentation](https://zero.rocicorp.dev)
+- [Cloudflare Workers](https://developers.cloudflare.com/workers/)
+- [Cloudflare Durable Objects](https://developers.cloudflare.com/durable-objects/)
+- [Hono Framework](https://hono.dev/)
