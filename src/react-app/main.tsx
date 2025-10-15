@@ -1,9 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ZeroProvider } from "@rocicorp/zero/react";
+import Cookies from "js-cookie";
 import { schema } from "../shared/schema.js";
 import { queries } from "../shared/queries.js";
 import { must } from "../shared/must.js";
+import { AUTH_COOKIE_NAME } from "../shared/auth.js";
 import "./index.css";
 import App from "./App.tsx";
 
@@ -12,8 +14,11 @@ const server = must(
   "required env var VITE_PUBLIC_SERVER_URL"
 );
 
+const signedCookie = Cookies.get(AUTH_COOKIE_NAME);
+const userID = signedCookie ? signedCookie.split(".")[0] : "anon";
+
 const zeroOptions = {
-  userID: "anon",
+  userID,
   server,
   schema,
   queries,

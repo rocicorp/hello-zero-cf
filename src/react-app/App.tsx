@@ -1,10 +1,14 @@
 import { type MouseEvent, useState } from "react";
-import { useQuery } from "@rocicorp/zero/react";
+import { useQuery, useZero } from "@rocicorp/zero/react";
+import Cookies from "js-cookie";
 import { formatDate } from "./date";
 import { useInterval } from "./use-interval";
 import { queries } from "../shared/queries";
+import type { Schema } from "../shared/schema";
+import { AUTH_COOKIE_NAME } from "../shared/auth";
 
 function App() {
+  const z = useZero<Schema>();
   const [filterUser, setFilterUser] = useState<string>("");
   const [filterText, setFilterText] = useState<string>("");
   const [action, setAction] = useState<"add" | "remove" | undefined>(undefined);
@@ -17,7 +21,6 @@ function App() {
   console.log("Messages from Zero:", allMessages);
 
   // For now, just use all messages as filtered
-  const currentUser = "anon";
   const filteredMessages = allMessages;
 
   const hasFilters = filterUser || filterText;
@@ -47,7 +50,7 @@ function App() {
   const addMessages = () => setAction("add");
 
   const removeMessages = (e: MouseEvent) => {
-    if (currentUser === "anon" && !e.shiftKey) {
+    if (z.userID === "anon" && !e.shiftKey) {
       alert(
         "You must be logged in to delete. Hold the shift key to try anyway."
       );
@@ -64,7 +67,7 @@ function App() {
     senderID: string,
     prev: string
   ) => {
-    if (senderID !== currentUser && !e.shiftKey) {
+    if (senderID !== z.userID && !e.shiftKey) {
       alert(
         "You aren't logged in as the sender of this message. Editing won't be permitted. Hold the shift key to try anyway."
       );
@@ -75,10 +78,20 @@ function App() {
   };
 
   const toggleLogin = async () => {
-    console.log("Toggle login");
+    if (z.userID === "anon") {
+      await fetch("/api/login");
+    } else {
+      Cookies.remove(AUTH_COOKIE_NAME);
+    }
+    location.reload();
   };
 
-  const user = currentUser;
+  // If initial sync hasn't completed, these can be empty.
+  if (!users.length) {
+    return null;
+  }
+
+  const user = users.find((user) => user.id === z.userID)?.name ?? "anon";
 
   return (
     <>
