@@ -13,7 +13,7 @@
     "publish": true
   },
   "dependencies": {
-    "@rocicorp/zero": "0.24.2025101500",
+    "@rocicorp/zero": "^0.24.3000000000",
     "ansi-escapes": "^7.1.1",
     "hono": "4.8.2",
     "js-cookie": "^3.0.5",
