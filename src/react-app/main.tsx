@@ -16,11 +16,13 @@ const cacheURL = must(
 );
 
 const signedCookie = Cookies.get(AUTH_COOKIE_NAME);
-const userID = signedCookie && signedCookie.split(".")[0];
-const context = userID ? { userID } : undefined;
+const context = signedCookie
+  ? { userID: signedCookie.split(".")[0] }
+  : undefined;
+const userID = context?.userID ?? null;
 
 const zeroOptions = {
-  userID: userID ?? "anon",
+  userID,
   cacheURL,
   schema,
   queries,

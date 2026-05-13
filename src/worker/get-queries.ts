@@ -10,12 +10,13 @@ export async function handleGetQueries(c: Context) {
   const userID = await getUserID(c);
   const ctx = userID ? { userID } : undefined;
 
-  return await handleQueryRequest(
-    (name, args) => {
+  return await handleQueryRequest({
+    handler: (name, args) => {
       const query = mustGetQuery(queries, name);
       return query.fn({ args, ctx });
     },
     schema,
-    c.req.raw
-  );
+    request: c.req.raw,
+    userID: userID ?? null,
+  });
 }

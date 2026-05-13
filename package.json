@@ -13,7 +13,7 @@
     "publish": true
   },
   "dependencies": {
-    "@rocicorp/zero": "^1.0.0",
+    "@rocicorp/zero": "1.5.0-canary.4",
     "ansi-escapes": "^7.1.1",
     "hono": "4.8.2",
     "js-cookie": "^3.0.5",
@@ -44,7 +44,7 @@
     "cf-typegen": "wrangler types",
     "check": "tsc && vite build && wrangler deploy --dry-run",
     "deploy": "wrangler deploy",
-    "dev:clean": "docker compose -f db/docker-compose.yml down -v && rm -rf .zero-replica*",
+    "dev:clean": "docker compose -f db/docker-compose.yml down -v && rm -rf \"${ZERO_REPLICA_FILE:-zero.db}\"*",
     "dev:db-down": "docker compose -f db/docker-compose.yml down",
     "dev:db-up": "docker compose -f db/docker-compose.yml up",
     "dev:ui": "vite",
