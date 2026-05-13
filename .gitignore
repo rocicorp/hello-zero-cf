@@ -125,7 +125,6 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variable files
-.env
 .env.development.local
 .env.test.local
 .env.production.local
@@ -193,10 +192,8 @@ dist
 
 ### Wrangler ###
 .wrangler/
-.env*
-!.env.example
-.dev.vars*
-!.dev.vars.example
+.env.example
+.dev.vars.example
 
 ### Zero ###
 zero.db*

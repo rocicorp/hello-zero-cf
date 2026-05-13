@@ -197,7 +197,10 @@ await setSignedCookie(c, AUTH_COOKIE_NAME, userID, secretKey);
 
 // Client: src/react-app/main.tsx
 const signedCookie = Cookies.get(AUTH_COOKIE_NAME);
-const userID = signedCookie && signedCookie.split(".")[0];
+const context = signedCookie
+  ? { userID: signedCookie.split(".")[0] }
+  : undefined;
+const userID = context?.userID ?? null;
 ```
 
 ### Durable Object with Zero
@@ -208,9 +211,10 @@ The DO runs Zero's lower-level class API (not React hooks):
 // src/worker/zero-do.ts
 export class ZeroDO extends DurableObject {
   #z: Zero<Schema> = new Zero({
-    server: "http://localhost:4848",
-    userID: "anon",
+    cacheURL: "http://localhost:4848",
+    userID: null,
     schema,
+    context: undefined,
     kvStore: "mem",
   });
 

@@ -1,20 +1,17 @@
 import { DurableObject } from "cloudflare:workers";
 import { Zero } from "@rocicorp/zero";
 import { clearTerminal, cursorTo } from "ansi-escapes";
-import {
-  schema,
-  type Schema,
-  type Message,
-  type User,
-} from "../shared/schema.js";
+import { type Context } from "../shared/auth.js";
+import { schema, type Message, type Schema, type User } from "../shared/schema.js";
 import { queries } from "../shared/queries.js";
 import { formatDate } from "../react-app/date.js";
 
 export class ZeroDO extends DurableObject {
-  #z: Zero<Schema> = new Zero({
-    server: "http://localhost:4848",
-    userID: "anon",
+  #z = new Zero<Schema, undefined, Context | undefined>({
+    cacheURL: "http://localhost:4848",
+    userID: null,
     schema,
+    context: undefined,
     kvStore: "mem",
   });
 

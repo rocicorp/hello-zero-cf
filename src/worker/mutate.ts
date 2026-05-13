@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import { handleMutateRequest } from "@rocicorp/zero/pg";
+import { handleMutateRequest } from "@rocicorp/zero/server";
 import { zeroPostgresJS } from "@rocicorp/zero/server/adapters/postgresjs";
 import type { Context } from "hono";
 import { must } from "../shared/must.js";
@@ -17,14 +17,15 @@ export async function handleMutate(c: Context) {
   const userID = await getUserID(c);
   const ctx = userID ? { userID } : undefined;
 
-  return await handleMutateRequest(
+  return await handleMutateRequest({
     dbProvider,
-    async (transact) => {
+    handler: async (transact) => {
       return await transact(async (tx, name, args) => {
         const mutator = mustGetMutator(mutators, name);
         return await mutator.fn({ tx, ctx, args });
       });
     },
-    c.req.raw
-  );
+    request: c.req.raw,
+    userID: userID ?? null,
+  });
 }
