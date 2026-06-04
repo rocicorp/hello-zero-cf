@@ -64,21 +64,21 @@ You'll need **3 terminals** to run this example!
 
 ```bash
 # Terminal 1
-npm run dev:db-up
+pnpm dev:db-up
 ```
 
 ### 2. Start Zero Cache
 
 ```bash
 # Terminal 2
-npm run dev:zero-cache
+pnpm dev:zero-cache
 ```
 
 ### 3. Start UI
 
 ```bash
 # Terminal 3
-npm run dev:ui
+pnpm dev:ui
 ```
 
 The Vite dev server (with Cloudflare plugin) runs your Worker code locally, handling both the React UI and API endpoints.
@@ -152,7 +152,7 @@ export const queries = {
       if (senderID) query = query.where("senderID", senderID);
       if (body) query = query.where("body", "LIKE", `%${escapeLike(body)}%`);
       return query.orderBy("timestamp", "desc");
-    }
+    },
   ),
 };
 ```
@@ -235,13 +235,13 @@ export class ZeroDO extends DurableObject {
 To stop Postgres and remove volumes:
 
 ```bash
-npm run dev:db-down
+pnpm dev:db-down
 ```
 
 To completely clean the database and Zero replica files:
 
 ```bash
-npm run dev:clean
+pnpm dev:clean
 ```
 
 ## Deployment
@@ -250,7 +250,7 @@ This is a development demo. For production deployment to Cloudflare:
 
 1. Create a production Postgres database with logical replication enabled
 2. Set up environment variables in Cloudflare dashboard or via `wrangler secret`
-3. Deploy: `npm run deploy`
+3. Deploy: `pnpm deploy`
 
 Note: You'll need to host the Zero cache server somewhere accessible to your Worker (Cloudflare Workers can make outbound HTTP requests).
 

@@ -4,3 +4,5 @@ allowBuilds:
   protobufjs: true
   sharp: true
   workerd: true
+minimumReleaseAgeExclude:
+  - '@rocicorp/zero@1.6.0'
